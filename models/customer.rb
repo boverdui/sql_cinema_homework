@@ -1,5 +1,6 @@
 require_relative('../db/sql_runner.rb')
 require_relative('film.rb')
+require_relative('screening.rb')
 require_relative('ticket.rb')
 
 class Customer
@@ -29,15 +30,6 @@ class Customer
     @id = result[0]['id'].to_i
   end
 
-  def buy_ticket(id_number)
-    price = Film.find(id_number).price
-    @funds -= price
-    update()
-    ticket = Ticket.new({'film_id' => id_number, 'customer_id' => @id})
-    ticket.save()
-    return ticket
-  end
-
   def update()
     sql =
     "UPDATE customers
@@ -58,13 +50,51 @@ class Customer
     SqlRunner.run(sql, [@id])
   end
 
+  def buy_ticket(id_number)
+    screening = Screening.find(id_number)
+    if screening.ticket_available()
+      @funds -= screening.price
+      update()
+      ticket = Ticket.new({'screening_id' => id_number, 'customer_id' => @id})
+      ticket.save()
+      return ticket
+    end
+  end
+
+  def screenings()
+    sql =
+      "SELECT screenings.*
+      FROM screenings
+      INNER JOIN tickets
+      ON screenings.id = tickets.screening_id
+      WHERE customer_id = $1;"
+    result = SqlRunner.run(sql, [@id])
+    screenings = result.map {|screening| Screening.new(screening)}
+    return screenings
+  end
+
+  def screening_count()
+    sql =
+      "SELECT COUNT(screenings.id)
+      FROM screenings
+      INNER JOIN tickets
+      ON screenings.id = tickets.screening_id
+      WHERE customer_id = $1;"
+    result =  SqlRunner.run(sql, [@id])
+    count = result[0]['count'].to_i
+    return count
+  end
+
   def films()
     sql =
       "SELECT films.*
       FROM films
+      INNER JOIN screenings
+      ON films.id = screenings.film_id
       INNER JOIN tickets
-      ON films.id = tickets.film_id
-      WHERE customer_id = $1;"
+      ON screenings.id = tickets.screening_id
+      WHERE tickets.customer_id = $1
+      GROUP BY films.id;"
     result = SqlRunner.run(sql, [@id])
     films = result.map {|film| Film.new(film)}
     return films
@@ -72,11 +102,13 @@ class Customer
 
   def film_count()
     sql =
-      "SELECT COUNT(films.*)
+      "SELECT COUNT(DISTINCT films.id)
       FROM films
+      INNER JOIN screenings
+      ON films.id = screenings.film_id
       INNER JOIN tickets
-      ON films.id = tickets.film_id
-      WHERE customer_id = $1;"
+      ON screenings.id = tickets.screening_id
+      WHERE tickets.customer_id = $1;"
     result =  SqlRunner.run(sql, [@id])
     count = result[0]['count'].to_i
     return count

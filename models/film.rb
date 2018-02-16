@@ -3,44 +3,32 @@ require_relative('customer.rb')
 
 class Film
 
-  attr_accessor :title, :price
+  attr_accessor :title
   attr_reader :id
 
   def initialize(options)
     @id = options['id'].to_i if options['id']
     @title = options['title']
-    @price = options['price'].to_i
   end
 
   def save()
     sql =
     "INSERT INTO films
     (
-      title,
-      price
+      title
     )
     values
     (
-      $1, $2
+      $1
     )
     RETURNING id;"
-    result = SqlRunner.run(sql, [@title, @price])
+    result = SqlRunner.run(sql, [@title])
     @id = result[0]['id'].to_i
   end
 
   def update()
-    sql =
-    "UPDATE films
-    SET
-    (
-      title,
-      price
-    ) =
-    (
-      $1, $2
-    )
-    WHERE id = $3;"
-    SqlRunner.run(sql, [@title, @price, @id])
+    sql = "UPDATE films SET title = $1 WHERE id = $2;"
+    SqlRunner.run(sql, [@title, @id])
   end
 
   def delete()
@@ -50,11 +38,13 @@ class Film
 
   def customers()
     sql =
-      "SELECT customers.*
+      "SELECT DISTINCT customers.name
       FROM customers
       INNER JOIN tickets
       ON customers.id = tickets.customer_id
-      WHERE tickets.film_id = $1;"
+      INNER JOIN screenings
+      ON screenings.id = tickets.screening_id
+      WHERE screenings.film_id = $1;"
     result = SqlRunner.run(sql, [@id])
     customers = result.map {|customer| Customer.new(customer)}
     return customers
@@ -62,14 +52,30 @@ class Film
 
   def customer_count()
     sql =
-      "SELECT COUNT(customers.*)
+      "SELECT COUNT(DISTINCT customers.name)
       FROM customers
       INNER JOIN tickets
       ON customers.id = tickets.customer_id
-      WHERE tickets.film_id = $1;"
+      INNER JOIN screenings
+      ON screenings.id = tickets.screening_id
+      WHERE screenings.film_id = $1;"
     result = SqlRunner.run(sql, [@id])
     count = result[0]['count'].to_i
     return count
+  end
+
+  def Film.most_popular()
+    sql =
+      "SELECT films.title
+      FROM films
+      INNER JOIN screenings
+      ON films.id = screenings.film_id
+      INNER JOIN tickets
+      ON screenings.id = tickets.screening_id
+      GROUP BY films.title
+      ORDER BY COUNT(films) DESC;"
+    result = SqlRunner.run(sql)
+    return Film.new(result[0])
   end
 
   def Film.all()
