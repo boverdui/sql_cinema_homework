@@ -1,5 +1,6 @@
 require_relative('../db/sql_runner.rb')
 require_relative('customer.rb')
+require_relative('screening.rb')
 
 class Film
 
@@ -64,18 +65,17 @@ class Film
     return count
   end
 
-  def Film.most_popular()
+  def busiest_screening()
     sql =
-      "SELECT films.title
-      FROM films
-      INNER JOIN screenings
-      ON films.id = screenings.film_id
+      "SELECT screenings.*
+      FROM screenings
       INNER JOIN tickets
       ON screenings.id = tickets.screening_id
-      GROUP BY films.title
-      ORDER BY COUNT(films) DESC;"
-    result = SqlRunner.run(sql)
-    return Film.new(result[0])
+      WHERE screenings.film_id = $1
+      GROUP BY screenings.id
+      ORDER BY COUNT(tickets.id) DESC;"
+    result = SqlRunner.run(sql, [@id])
+    return Screening.new(result[0])
   end
 
   def Film.all()
