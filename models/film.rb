@@ -60,6 +60,18 @@ class Film
     return customers
   end
 
+  def customer_count()
+    sql =
+      "SELECT COUNT(customers.*)
+      FROM customers
+      INNER JOIN tickets
+      ON customers.id = tickets.customer_id
+      WHERE tickets.film_id = $1;"
+    result = SqlRunner.run(sql, [@id])
+    count = result[0]['count'].to_i
+    return count
+  end
+
   def Film.all()
     sql = "SELECT * FROM films;"
     result = SqlRunner.run(sql)
@@ -70,6 +82,12 @@ class Film
   def Film.delete_all()
     sql = "DELETE FROM films;"
     SqlRunner.run(sql)
+  end
+
+  def Film.find(id_number)
+    sql = "SELECT * FROM films WHERE id = $1"
+    result = SqlRunner.run(sql, [id_number])
+    return Film.new(result[0])
   end
 
 end
