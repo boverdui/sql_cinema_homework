@@ -13,16 +13,15 @@ class Film
   end
 
   def save()
-    sql =
-    "INSERT INTO films
-    (
-      title
-    )
-    values
-    (
-      $1
-    )
-    RETURNING id;"
+    sql = "INSERT INTO films
+      (
+        title
+      )
+      VALUES
+      (
+        $1
+      )
+      RETURNING id;"
     result = SqlRunner.run(sql, [@title])
     @id = result[0]['id'].to_i
   end
@@ -38,13 +37,12 @@ class Film
   end
 
   def customers()
-    sql =
-      "SELECT DISTINCT customers.name
+    sql = "SELECT customers.*
       FROM customers
       INNER JOIN tickets
       ON customers.id = tickets.customer_id
       INNER JOIN screenings
-      ON screenings.id = tickets.screening_id
+      ON tickets.screening_id = screenings.id
       WHERE screenings.film_id = $1;"
     result = SqlRunner.run(sql, [@id])
     customers = result.map {|customer| Customer.new(customer)}
@@ -52,13 +50,12 @@ class Film
   end
 
   def customer_count()
-    sql =
-      "SELECT COUNT(DISTINCT customers.name)
+    sql = "SELECT COUNT(customers.*)
       FROM customers
       INNER JOIN tickets
       ON customers.id = tickets.customer_id
       INNER JOIN screenings
-      ON screenings.id = tickets.screening_id
+      ON tickets.screening_id = screenings.id
       WHERE screenings.film_id = $1;"
     result = SqlRunner.run(sql, [@id])
     count = result[0]['count'].to_i
@@ -66,8 +63,7 @@ class Film
   end
 
   def busiest_screening()
-    sql =
-      "SELECT screenings.*
+    sql = "SELECT screenings.*, COUNT(tickets.id)
       FROM screenings
       INNER JOIN tickets
       ON screenings.id = tickets.screening_id
@@ -90,9 +86,9 @@ class Film
     SqlRunner.run(sql)
   end
 
-  def Film.find(id_number)
+  def Film.find(film_id)
     sql = "SELECT * FROM films WHERE id = $1"
-    result = SqlRunner.run(sql, [id_number])
+    result = SqlRunner.run(sql, [film_id])
     return Film.new(result[0])
   end
 

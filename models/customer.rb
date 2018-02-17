@@ -15,33 +15,31 @@ class Customer
   end
 
   def save()
-    sql =
-    "INSERT INTO customers
-    (
-      name,
-      funds
-    )
-    values
-    (
-      $1, $2
-    )
-    RETURNING id;"
+    sql = "INSERT INTO customers
+      (
+        name,
+        funds
+      )
+      VALUES
+      (
+        $1, $2
+      )
+      RETURNING id;"
     result = SqlRunner.run(sql, [@name, @funds])
     @id = result[0]['id'].to_i
   end
 
   def update()
-    sql =
-    "UPDATE customers
-    SET
-    (
-      name,
-      funds
-    ) =
-    (
-      $1, $2
-    )
-    WHERE id = $3;"
+    sql = "UPDATE customers
+      SET
+      (
+        name,
+        funds
+      ) =
+      (
+        $1, $2
+      )
+      WHERE id = $3;"
     SqlRunner.run(sql, [@name, @funds, @id])
   end
 
@@ -50,20 +48,21 @@ class Customer
     SqlRunner.run(sql, [@id])
   end
 
-  def buy_ticket(id_number)
-    screening = Screening.find(id_number)
+  def buy_ticket(screening_id)
+    screening = Screening.find(screening_id)
     if screening.ticket_available()
-      @funds -= screening.price
-      update()
-      ticket = Ticket.new({'screening_id' => id_number, 'customer_id' => @id})
-      ticket.save()
-      return ticket
+      if screening.price <= @funds
+        @funds -= screening.price
+        update()
+        ticket = Ticket.new({'screening_id' => screening_id, 'customer_id' => @id})
+        ticket.save()
+        return ticket
+      end
     end
   end
 
-  def screenings()
-    sql =
-      "SELECT screenings.*
+  def bookings()
+    sql = "SELECT screenings.*
       FROM screenings
       INNER JOIN tickets
       ON screenings.id = tickets.screening_id
@@ -73,9 +72,8 @@ class Customer
     return screenings
   end
 
-  def screening_count()
-    sql =
-      "SELECT COUNT(screenings.id)
+  def booking_count()
+    sql = "SELECT COUNT(screenings.*)
       FROM screenings
       INNER JOIN tickets
       ON screenings.id = tickets.screening_id
@@ -86,23 +84,20 @@ class Customer
   end
 
   def films()
-    sql =
-      "SELECT films.*
+    sql = "SELECT DISTINCT films.*
       FROM films
       INNER JOIN screenings
       ON films.id = screenings.film_id
       INNER JOIN tickets
       ON screenings.id = tickets.screening_id
-      WHERE tickets.customer_id = $1
-      GROUP BY films.id;"
+      WHERE tickets.customer_id = $1;"
     result = SqlRunner.run(sql, [@id])
     films = result.map {|film| Film.new(film)}
     return films
   end
 
   def film_count()
-    sql =
-      "SELECT COUNT(DISTINCT films.id)
+    sql = "SELECT COUNT(DISTINCT films.*)
       FROM films
       INNER JOIN screenings
       ON films.id = screenings.film_id
@@ -126,9 +121,9 @@ class Customer
     SqlRunner.run(sql)
   end
 
-  def Customer.find(id_number)
+  def Customer.find(customer_id)
     sql = "SELECT * FROM customers WHERE id = $1"
-    result = SqlRunner.run(sql, [id_number])
+    result = SqlRunner.run(sql, [customer_id])
     return Customer.new(result[0])
   end
 

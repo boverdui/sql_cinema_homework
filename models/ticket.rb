@@ -11,33 +11,31 @@ class Ticket
   end
 
   def save()
-    sql =
-    "INSERT INTO tickets
-    (
-      screening_id,
-      customer_id
-    )
-    values
-    (
-      $1, $2
-    )
-    RETURNING id;"
+    sql = "INSERT INTO tickets
+      (
+        screening_id,
+        customer_id
+      )
+      VALUES
+      (
+        $1, $2
+      )
+      RETURNING id;"
     result = SqlRunner.run(sql, [@screening_id, @customer_id])
     @id = result[0]['id'].to_i
   end
 
   def update()
-    sql =
-    "UPDATE tickets
-    SET
-    (
-      screening_id,
-      customer_id
-    ) =
-    (
-      $1, $2
-    )
-    WHERE id = $3;"
+    sql = "UPDATE tickets
+      SET
+      (
+        screening_id,
+        customer_id
+      ) =
+      (
+        $1, $2
+      )
+      WHERE id = $3;"
     SqlRunner.run(sql, [@screening_id, @customer_id, @id])
   end
 

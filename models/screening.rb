@@ -1,6 +1,5 @@
 require_relative('../db/sql_runner.rb')
 require_relative('customer.rb')
-require_relative('film.rb')
 
 class Screening
 
@@ -16,37 +15,35 @@ class Screening
   end
 
   def save()
-    sql =
-    "INSERT INTO screenings
-    (
-      time,
-      price,
-      capacity,
-      film_id
-    )
-    values
-    (
-      $1, $2, $3, $4
-    )
-    RETURNING id;"
+    sql = "INSERT INTO screenings
+      (
+        time,
+        price,
+        capacity,
+        film_id
+      )
+      VALUES
+      (
+        $1, $2, $3, $4
+      )
+      RETURNING id;"
     result = SqlRunner.run(sql, [@time, @price, @capacity, @film_id])
     @id = result[0]['id'].to_i
   end
 
   def update()
-    sql =
-    "UPDATE screenings
-    SET
-    (
-      time,
-      price,
-      capacity,
-      film_id
-    ) =
-    (
-      $1, $2, $3, $4
-    )
-    WHERE id = $5;"
+    sql = "UPDATE screenings
+      SET
+      (
+        time,
+        price,
+        capacity,
+        film_id
+      ) =
+      (
+        $1, $2, $3, $4
+      )
+      WHERE id = $5;"
     SqlRunner.run(sql, [@time, @price, @capacity, @film_id, @id])
   end
 
@@ -86,7 +83,7 @@ class Screening
   def Screening.all()
     sql = "SELECT * FROM screenings;"
     result = SqlRunner.run(sql)
-    screenings = result.map{|screening| Film.new(screening)}
+    screenings = result.map{|screening| Screening.new(screening)}
     return screenings
   end
 
@@ -95,9 +92,9 @@ class Screening
     SqlRunner.run(sql)
   end
 
-  def Screening.find(id_number)
+  def Screening.find(screening_id)
     sql = "SELECT * FROM screenings WHERE id = $1"
-    result = SqlRunner.run(sql, [id_number])
+    result = SqlRunner.run(sql, [screening_id])
     return Screening.new(result[0])
   end
 
