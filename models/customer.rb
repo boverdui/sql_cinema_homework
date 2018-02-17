@@ -73,7 +73,7 @@ class Customer
   end
 
   def booking_count()
-    sql = "SELECT COUNT(s.*)
+    sql = "SELECT COUNT(s.id)
       FROM screenings AS s
       INNER JOIN tickets AS t
       ON s.id = t.screening_id
@@ -97,7 +97,7 @@ class Customer
   end
 
   def film_count()
-    sql = "SELECT COUNT(DISTINCT f.*)
+    sql = "SELECT COUNT(DISTINCT f.id)
       FROM films AS f
       INNER JOIN screenings AS s
       ON f.id = s.film_id
