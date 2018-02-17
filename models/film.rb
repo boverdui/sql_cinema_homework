@@ -37,39 +37,39 @@ class Film
   end
 
   def customers()
-    sql = "SELECT customers.*
-      FROM customers
-      INNER JOIN tickets
-      ON customers.id = tickets.customer_id
-      INNER JOIN screenings
-      ON tickets.screening_id = screenings.id
-      WHERE screenings.film_id = $1;"
+    sql = "SELECT c.*
+      FROM customers AS c
+      INNER JOIN tickets AS t
+      ON c.id = t.customer_id
+      INNER JOIN screenings AS s
+      ON t.screening_id = s.id
+      WHERE s.film_id = $1;"
     result = SqlRunner.run(sql, [@id])
     customers = result.map {|customer| Customer.new(customer)}
     return customers
   end
 
   def customer_count()
-    sql = "SELECT COUNT(customers.*)
-      FROM customers
-      INNER JOIN tickets
-      ON customers.id = tickets.customer_id
-      INNER JOIN screenings
-      ON tickets.screening_id = screenings.id
-      WHERE screenings.film_id = $1;"
+    sql = "SELECT COUNT(c.id)
+      FROM customers AS c
+      INNER JOIN tickets AS t
+      ON c.id = t.customer_id
+      INNER JOIN screenings AS s
+      ON t.screening_id = s.id
+      WHERE s.film_id = $1;"
     result = SqlRunner.run(sql, [@id])
     count = result[0]['count'].to_i
     return count
   end
 
   def busiest_screening()
-    sql = "SELECT screenings.*, COUNT(tickets.id)
-      FROM screenings
-      INNER JOIN tickets
-      ON screenings.id = tickets.screening_id
-      WHERE screenings.film_id = $1
-      GROUP BY screenings.id
-      ORDER BY COUNT(tickets.id) DESC;"
+    sql = "SELECT s.*, COUNT(t.id)
+      FROM screenings AS s
+      INNER JOIN tickets AS t
+      ON s.id = t.screening_id
+      WHERE s.film_id = $1
+      GROUP BY s.id
+      ORDER BY COUNT(t.id) DESC;"
     result = SqlRunner.run(sql, [@id])
     return Screening.new(result[0])
   end

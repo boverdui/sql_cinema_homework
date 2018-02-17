@@ -62,48 +62,48 @@ class Customer
   end
 
   def bookings()
-    sql = "SELECT screenings.*
-      FROM screenings
-      INNER JOIN tickets
-      ON screenings.id = tickets.screening_id
-      WHERE customer_id = $1;"
+    sql = "SELECT s.*
+      FROM screenings AS s
+      INNER JOIN tickets AS t
+      ON s.id = t.screening_id
+      WHERE t.customer_id = $1;"
     result = SqlRunner.run(sql, [@id])
     screenings = result.map {|screening| Screening.new(screening)}
     return screenings
   end
 
   def booking_count()
-    sql = "SELECT COUNT(screenings.*)
-      FROM screenings
-      INNER JOIN tickets
-      ON screenings.id = tickets.screening_id
-      WHERE customer_id = $1;"
+    sql = "SELECT COUNT(s.*)
+      FROM screenings AS s
+      INNER JOIN tickets AS t
+      ON s.id = t.screening_id
+      WHERE t.customer_id = $1;"
     result =  SqlRunner.run(sql, [@id])
     count = result[0]['count'].to_i
     return count
   end
 
   def films()
-    sql = "SELECT DISTINCT films.*
-      FROM films
-      INNER JOIN screenings
-      ON films.id = screenings.film_id
-      INNER JOIN tickets
-      ON screenings.id = tickets.screening_id
-      WHERE tickets.customer_id = $1;"
+    sql = "SELECT DISTINCT f.*
+      FROM films AS f
+      INNER JOIN screenings AS s
+      ON f.id = s.film_id
+      INNER JOIN tickets AS t
+      ON s.id = t.screening_id
+      WHERE t.customer_id = $1;"
     result = SqlRunner.run(sql, [@id])
     films = result.map {|film| Film.new(film)}
     return films
   end
 
   def film_count()
-    sql = "SELECT COUNT(DISTINCT films.*)
-      FROM films
-      INNER JOIN screenings
-      ON films.id = screenings.film_id
-      INNER JOIN tickets
-      ON screenings.id = tickets.screening_id
-      WHERE tickets.customer_id = $1;"
+    sql = "SELECT COUNT(DISTINCT f.*)
+      FROM films AS f
+      INNER JOIN screenings AS s
+      ON f.id = s.film_id
+      INNER JOIN tickets AS t
+      ON s.id = t.screening_id
+      WHERE t.customer_id = $1;"
     result =  SqlRunner.run(sql, [@id])
     count = result[0]['count'].to_i
     return count

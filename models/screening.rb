@@ -54,11 +54,11 @@ class Screening
 
   def customers()
     sql =
-      "SELECT customers.*
-      FROM customers
-      INNER JOIN tickets
-      ON customers.id = tickets.customer_id
-      WHERE tickets.screening_id = $1;"
+      "SELECT c.*
+      FROM customers AS c
+      INNER JOIN tickets AS t
+      ON c.id = t.customer_id
+      WHERE t.screening_id = $1;"
     result = SqlRunner.run(sql, [@id])
     customers = result.map {|customer| Customer.new(customer)}
     return customers
@@ -66,11 +66,11 @@ class Screening
 
   def customer_count()
     sql =
-      "SELECT COUNT(customers.*)
-      FROM customers
-      INNER JOIN tickets
-      ON customers.id = tickets.customer_id
-      WHERE tickets.screening_id = $1;"
+      "SELECT COUNT(c.id)
+      FROM customers AS c
+      INNER JOIN tickets AS t
+      ON c.id = t.customer_id
+      WHERE t.screening_id = $1;"
     result = SqlRunner.run(sql, [@id])
     count = result[0]['count'].to_i
     return count
