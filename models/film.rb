@@ -71,7 +71,12 @@ class Film
       GROUP BY s.id
       ORDER BY COUNT(t.id) DESC;"
     result = SqlRunner.run(sql, [@id])
-    return Screening.new(result[0])
+    busiest = []
+    for screening in result
+      busiest << screening if screening['count'] == result[0]['count']
+    end
+    screenings = busiest.map {|screening| Screening.new(screening)}
+    return screenings
   end
 
   def Film.all()
